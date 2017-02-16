@@ -1,0 +1,56 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/container"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="com.fi.uba.ar.controllers.MainActivity"
+    tools:ignore="MergeRootFrame" >
+
+    <FrameLayout
+        android:id="@+id/main_container"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/launch_3d_button"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentTop="true" >
+
+    </FrameLayout>
+
+    <Button
+        android:id="@+id/launch_3d_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentLeft="true"
+        android:text="test"
+        android:onClick="testScale"
+    />
+    <!--
+    android:onClick="testHandDetection" 
+    android:onClick="launchDebugFragment" 
+    -->
+
+    <Button
+        android:id="@+id/sample_hand_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentRight="true"        
+     	android:onClick="sampleHandColor"           
+        android:text="Hand" />
+
+<!--  -->
+
+    <Button
+        android:id="@+id/capture_marker_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/main_container"
+        android:layout_marginLeft="34dp"
+        android:layout_toRightOf="@+id/launch_3d_button"
+        android:onClick="captureMarker"
+        android:text="Scan" />
+  
+</RelativeLayout>
+

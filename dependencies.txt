@@ -1,0 +1,10 @@
+3rd party dependencies:
+=======================
+
+- OpenCV for Android (http://sourceforge.net/projects/opencvlibrary/files/opencv-android/)
+- Rajawali 3D engine (https://github.com/MasDennis/Rajawali)
+- Apache Commons Configuration v1.10 (http://commons.apache.org/proper/commons-configuration/)
+- Apache Commons Lang v2.6 (http://commons.apache.org/proper/commons-lang/)
+- Apache Commons IO v2.4 (http://commons.apache.org/proper/commons-io/)
+- Android Asynchronous HTTP Client v1.4.6 (http://loopj.com/android-async-http/)
+- Greenrobot EventBus v2.2.1 (https://github.com/greenrobot/EventBus/)

@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">FiubaAR_vuforia</string>
+    <string name="hello_world">Hello world!</string>
+    
+    <!-- menu de opciones de settings -->
+    <string name="action_settings">Settings</string>
+    <string name="action_dump_debug_info">Dump Debug Info</string>
+    
+    <!-- fin menu de opciones de settings -->
+    
+    <!-- <string name="calibration_instructions">You will get much more accurate results once you calibrate your camera. To do so, you must first take several pictures from the pattern.</string> -->
+    <string name="calibration_instructions">Apunte la camara al patron de circulos. Cuando estos sean detectados, presione en la pantalla para tomar una captura. Repita el procedimiento desde diferentes angulos hasta obtener al menos unas 20 imagenes</string>
+    
+    <string name="calibration_photo_description">image taken</string>
+    
+     <string name="calibration_run_failed">La calibracion se ha ejecutado pero ha fallado por algun motivo. Se utilizara una calibracion por defecto que muy probablemente no se ajuste a su dispositivo.</string>
+    
+    <string name="calibration_missing_description">Antes de poder utilizar la aplicacion se debe realizar la calibracion de la camara.</string>
+    
+    <string name="action_calibrate">Calibrate</string>
+    <string name="calibration">Calibration</string>
+    <string name="undistortion">Undistortion</string>
+    <string name="comparison">Comparison</string>
+    <string name="preview_mode">Preview mode</string>
+    <string name="calibration_successful">Successfully calibrated!\nAvg. re-projection error:</string>
+    <string name="calibration_unsuccessful">Unsuccessful calibration.\nTry again</string>
+    <string name="more_samples">Please, capture more samples</string>
+    <string name="calibrating">Calibrating...</string>
+    <string name="please_wait">Please, wait</string>
+    <string name="original">Original</string>
+    <string name="undistorted">Undistorted</string>
+    
+    <string name="content_desc_camera_button">Camera Button</string>
+    <string name="overlay_build_target_help">Hold the device parallel to the target</string>
+    <string name="target_quality_error_title">Low Quality Image</string>
+    <string name="target_quality_error_desc">The image has very little detail, please try another.</string>
+    <string name="button_OK">OK</string>
+    
+    <!-- menu de vuforia que quizas no usemos completamente -->
+    <string name="menu_back">Vuforia Samples</string>
+    <string name="menu_extended_tracking">Extended Tracking</string>
+    <string name="menu_character_mode">Character Mode</string>
+    <string name="menu_flash">Flash</string>
+    <string name="menu_flash_error_on">Unable to turn on flash</string>
+    <string name="menu_flash_error_off">Unable to turn off flash</string>
+    <string name="menu_contAutofocus">Autofocus</string>
+    <string name="menu_contAutofocus_error_on">Unable to activate Continuous Auto-Focus</string>
+    <string name="menu_contAutofocus_error_off">Unable to deactivate Continuous Auto-Focus</string>
+    <string name="menu_datasets">DATASETS</string>
+    <string name="menu_camera">CAMERA</string>
+    <string name="menu_camera_front">Front</string>
+    <string name="menu_camera_back">Rear</string>
+    <string name="menu_button_red">Red</string>
+    <string name="menu_button_blue">Blue</string>
+    <string name="menu_button_yellow">Yellow</string>
+    <string name="menu_button_green">Green</string>
+    <!-- fin de menu vuforia -->
+    
+    <!-- strings para las pantallas de settings -->
+    <string name="pref_server_settings_title">Server Settings</string>
+    <string name="pref_server_url">Server URL</string>
+    <string name="pref_server_url_summary">Server URL where the application will connect to obtain 3D models</string>
+    
+    <!-- fin de strings para las pantallas de settings -->
+    
+
+</resources>
