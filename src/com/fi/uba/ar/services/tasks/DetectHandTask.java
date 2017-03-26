@@ -2,8 +2,8 @@ package com.fi.uba.ar.services.tasks;
 
 import com.fi.uba.ar.MainApplication;
 import com.fi.uba.ar.controllers.MainActivity;
+import com.fi.uba.ar.detectors.NativeHandTrackingDetector;
 import com.fi.uba.ar.model.JavaCameraFrame;
-import com.fi.uba.ar.services.detectors.NativeHandTrackingDetector;
 import com.fi.uba.ar.utils.CommonUtils;
 import com.fi.uba.ar.utils.CustomLog;
 import com.fi.uba.ar.utils.MatUtils;

@@ -3,11 +3,14 @@ package com.fi.uba.ar.rest;
 import java.io.File;
 
 import android.os.Looper;
+import android.util.Log;
 
 import com.fi.uba.ar.MainApplication;
 import com.fi.uba.ar.model.Configuration;
 import com.fi.uba.ar.utils.CustomLog;
 import com.fi.uba.ar.utils.FileUtils;
+import com.fi.uba.ar.utils.MessageUtils;
+import com.fi.uba.ar.utils.MessageUtils.ToastType;
 import com.loopj.android.http.*;
 import org.apache.http.Header;
 import org.json.*;
@@ -77,10 +80,11 @@ public class RestClient {
 
 			@Override
 			public void onFailure(int statusCode, Header[] headers, Throwable exception, File response) {
-				CustomLog.e(TAG, "downloadFile - onFailure = " + response
-						+ '\n' + exception.getMessage());
+				CustomLog.e(TAG, "downloadFile - onFailure = " + response + '\n' + exception.getMessage());
+				CustomLog.e(TAG, Log.getStackTraceString(exception));
 				//TODO: deberiamos de alguna forma notificar al usuario que fallo la descarga
 				// Quizas podemso usar los "toast" messages como los que usamos para mostrar el QR
+				MessageUtils.showToast(ToastType.ERROR, "Failed downloading from server");
 			}
 			/*
 			@Override

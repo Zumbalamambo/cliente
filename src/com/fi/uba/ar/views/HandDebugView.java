@@ -18,6 +18,8 @@ import android.view.WindowManager;
 
 // https://github.com/codepath/android_guides/wiki/Basic-Painting-with-Views
 
+//TODO: el uso de esta clase deberia ser configurable para poder 
+// activar/desactivar cuando sea necesario
 public class HandDebugView extends SurfaceView {
 	private static final String TAG = "HandDebugView";
 	// setup initial color

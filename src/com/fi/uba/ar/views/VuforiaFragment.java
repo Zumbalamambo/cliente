@@ -1,52 +1,29 @@
-/*===============================================================================
-Copyright (c) 2012-2014 Qualcomm Connected Experiences, Inc. All Rights Reserved.
-
-Vuforia is a trademark of QUALCOMM Incorporated, registered in the United States 
-and other countries. Trademarks of QUALCOMM Incorporated are used with permission.
-===============================================================================*/
-
 package com.fi.uba.ar.views;
 
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Vector;
-
 import org.opencv.core.Mat;
-
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Fragment;
 import android.content.DialogInterface;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 import android.graphics.Color;
-import android.hardware.Camera;
-import android.hardware.Camera.CameraInfo;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
 import android.util.DisplayMetrics;
 import android.util.Log;
-import android.view.GestureDetector;
 import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
-import android.view.ViewGroup.LayoutParams;
-import android.widget.Button;
 import android.widget.CheckBox;
-import android.widget.RelativeLayout;
 import android.widget.Switch;
 import android.widget.Toast;
-
 import com.qualcomm.vuforia.CameraDevice;
 import com.qualcomm.vuforia.DataSet;
 import com.qualcomm.vuforia.Frame;
-import com.qualcomm.vuforia.Image;
 import com.qualcomm.vuforia.ImageTargetBuilder;
 import com.qualcomm.vuforia.ImageTracker;
-import com.qualcomm.vuforia.PIXEL_FORMAT;
 import com.qualcomm.vuforia.Renderer;
 import com.qualcomm.vuforia.State;
 import com.qualcomm.vuforia.Trackable;
@@ -60,22 +37,17 @@ import com.fi.uba.ar.controllers.VuforiaSessionControl;
 import com.fi.uba.ar.controllers.VuforiaSession;
 import com.fi.uba.ar.controllers.VuforiaRenderer;
 import com.fi.uba.ar.exceptions.VuforiaException;
-import com.fi.uba.ar.model.Marker;
-import com.fi.uba.ar.services.detectors.MarkerDetector;
 import com.fi.uba.ar.utils.CustomLog;
 import com.fi.uba.ar.utils.MatUtils;
 
-// The main activity for the UserDefinedTargets sample.
 public class VuforiaFragment extends Fragment implements VuforiaSessionControl, OnClickListener
 {
-    private static final String LOGTAG = "UserDefinedTargets";
+    private static final String LOGTAG = "VuforiaFragment";
     
     private VuforiaSession vuforiaAppSession;
     
-//    // Our OpenGL view:
     private VuforiaGLView mGlView;
-//    
-//    // Our renderer:
+
     private VuforiaRenderer mRenderer;
 //    
 //    // The textures we will use for rendering:
@@ -93,7 +65,6 @@ public class VuforiaFragment extends Fragment implements VuforiaSessionControl, 
     
     DataSet dataSetUserDef = null;
     
-    
     //private SampleAppMenu mSampleAppMenu;
     private ArrayList<View> mSettingsAdditionalViews;
     
@@ -104,8 +75,6 @@ public class VuforiaFragment extends Fragment implements VuforiaSessionControl, 
     private View mFlashOptionView;
     
     //private LoadingDialogHandler loadingDialogHandler = new LoadingDialogHandler(this);
-    
-
     
     boolean mIsDroidDevice = false;
 
@@ -122,7 +91,7 @@ public class VuforiaFragment extends Fragment implements VuforiaSessionControl, 
     @Override
     public void onCreate(Bundle savedInstanceState)
     {
-        Log.d(LOGTAG, "onCreate");
+        //Log.d(LOGTAG, "onCreate");
         super.onCreate(savedInstanceState);
         
         vuforiaAppSession = new VuforiaSession(this);
@@ -154,16 +123,15 @@ public class VuforiaFragment extends Fragment implements VuforiaSessionControl, 
             vuforiaAppSession.resumeAR();
         } catch (VuforiaException e)
         {
-            Log.e(LOGTAG, e.getString());
+            Log.e(LOGTAG, Log.getStackTraceString(e));
         }
         
-//        // Resume the GL view:
+        // Resume the GL view:
         if (mGlView != null)
         {
             mGlView.setVisibility(View.VISIBLE);
             mGlView.onResume();
         }
-        
     }
     
     
@@ -171,7 +139,7 @@ public class VuforiaFragment extends Fragment implements VuforiaSessionControl, 
     @Override
     public void onPause()
     {
-        Log.d(LOGTAG, "onPause");
+//        Log.d(LOGTAG, "onPause");
         super.onPause();
         
         if (mGlView != null)
@@ -198,7 +166,7 @@ public class VuforiaFragment extends Fragment implements VuforiaSessionControl, 
             vuforiaAppSession.pauseAR();
         } catch (VuforiaException e)
         {
-            Log.e(LOGTAG, e.getString());
+            Log.e(LOGTAG, Log.getStackTraceString(e));
         }
     }
     
@@ -207,7 +175,7 @@ public class VuforiaFragment extends Fragment implements VuforiaSessionControl, 
     @Override
     public void onDestroy()
     {
-        Log.d(LOGTAG, "onDestroy");
+//        Log.d(LOGTAG, "onDestroy");
         super.onDestroy();
         
         try
@@ -230,7 +198,7 @@ public class VuforiaFragment extends Fragment implements VuforiaSessionControl, 
     @Override
     public void onConfigurationChanged(Configuration config)
     {
-        Log.d(LOGTAG, "onConfigurationChanged");
+//        Log.d(LOGTAG, "onConfigurationChanged");
         super.onConfigurationChanged(config);
         
         vuforiaAppSession.onConfigurationChanged();
@@ -354,6 +322,7 @@ public class VuforiaFragment extends Fragment implements VuforiaSessionControl, 
         return mUILayout;
     }
     
+    //XXX: creo que esto ya no se usa mas y toda la logica esta en renderFrame
     public boolean detectMarker() {
     	boolean found = false;
     	

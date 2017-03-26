@@ -5,9 +5,9 @@ import java.io.File;
 import org.opencv.core.Mat;
 
 import com.fi.uba.ar.R;
-import com.fi.uba.ar.engine3d.LoadModelFragment;
-import com.fi.uba.ar.engine3d.LoadModelFragment.LoadModelRenderer;
 import com.fi.uba.ar.utils.CustomLog;
+import com.fi.uba.ar.views.engine3d.LoadModelFragment;
+import com.fi.uba.ar.views.engine3d.LoadModelFragment.LoadModelRenderer;
 
 import android.app.Fragment;
 import rajawali.Object3D;
@@ -183,6 +183,12 @@ public class ObjectAR {
 		
 	}
 	
+	// Intentamos restaurar la posicion original del objeto tal como
+	// se veia cuando recien se cargo al detectar el marker
+	public void restoreOriginalStatus() {
+		getModelRenderer().restoreObject3DOriginalStatus();
+	}
+	
 	//XXX: solo para debug, para poder dumpear al log cualquier info util que necesitemos
 	public void dumpObject3DDebugInfo() {
 		LoadModelFragment.LoadModelRenderer renderer = getModelRenderer();
@@ -191,4 +197,7 @@ public class ObjectAR {
 		}					
 	}
 	
+	public int getID() {
+		return id;
+	}
 }

@@ -10,19 +10,20 @@ import org.opencv.core.Mat;
 import rajawali.Object3D;
 
 import android.app.Fragment;
-import android.util.Log;
 
 import com.fi.uba.ar.MainApplication;
 import com.fi.uba.ar.bus.events.MarkerDetectedEvent;
-import com.fi.uba.ar.engine3d.LoadModelFragment;
+import com.fi.uba.ar.detectors.HandTrackingDetector;
+import com.fi.uba.ar.detectors.MarkerDetector;
 
 import com.fi.uba.ar.model.Marker;
 import com.fi.uba.ar.model.ObjectAR;
 import com.fi.uba.ar.rest.Download3DModelAsyncTask;
-import com.fi.uba.ar.services.detectors.HandTrackingDetector;
-import com.fi.uba.ar.services.detectors.MarkerDetector;
 import com.fi.uba.ar.utils.CustomLog;
 import com.fi.uba.ar.utils.MatUtils;
+import com.fi.uba.ar.utils.MessageUtils;
+import com.fi.uba.ar.utils.MessageUtils.ToastType;
+import com.fi.uba.ar.views.engine3d.LoadModelFragment;
 
 import de.greenrobot.event.EventBus;
 
@@ -51,6 +52,8 @@ public class MainController {
 	//private CameraParameters cameraParams = null;
 	private MarkerDetector markerDetector;
 	private ObjectAR activeObjAR;
+	private ObjectAR loadingObjAR;
+	private boolean showLoadingObj = false;
 	private HandTrackingDetector htd;
 		
 	public MainController() {
@@ -58,6 +61,7 @@ public class MainController {
 		//EventBus.getDefault().register(this);
 		ar_objects = new ConcurrentHashMap<Integer, ObjectAR>();
 		activeObjAR = null;
+		loadingObjAR = null; // este se crea cuando se registra main activity
 		htd = null;
 	}
 	
@@ -116,35 +120,48 @@ public class MainController {
 		return htd;
 	}
 	
+	public void createLoadingObjectAR() {
+		CustomLog.d(TAG, "createLoadingObjectAR");
+		ObjectAR obj_ar = new ObjectAR(0, "loading");
+    	Fragment fragment = new LoadModelFragment(true);
+    	obj_ar.setFragment(fragment); 
+    	loadingObjAR = obj_ar;
+    	// agregamos el fragment pero no en el stack asi el boton "atras" nunca lo saca
+    	MainApplication.getInstance().getMainActivity().addFragment(fragment, "loading", false);    	
+	}
+	
     public int createObjectAR(String qr) { 
-
     	int id = ar_objects.size() + 1;
     	CustomLog.d(TAG, "creando y agregando nuevo ObjectAR ID = " +  id);
     	ObjectAR obj_ar = new ObjectAR(id, qr);
-    	Fragment fragment = new LoadModelFragment();
+    	Fragment fragment = new LoadModelFragment(false);
     	obj_ar.setFragment(fragment);    	
     	ar_objects.put(id, obj_ar);
-    	
-    	// quitamos el fragment del objeto AR anterior si es que lo habia
-    	if (activeObjAR != null) {
-    		MainApplication.getInstance().getMainActivity().removeFragment(activeObjAR.getFragment());
-    	}
-    	activeObjAR = obj_ar;
-    	
-    	MainApplication.getInstance().getMainActivity().addFragment(fragment);
+    	activeObjAR = obj_ar;    	
     	return id;
     }
     
     public ObjectAR getActiveObjectAR() {
     	return activeObjAR;
+    	//XXX: quizas debemos usar ObjectAR objAR = (showLoadingObj) ? loadingObjAR : activeObjAR; ??
     }
     
     public void updateObjectARPos(float[] modelViewMatrix) {
-    	if (activeObjAR != null) {
-//    		CustomLog.d(TAG, "updateObjectARPos - actualizando objeto AR POS...");
-    		activeObjAR.updateMarkerPosition(modelViewMatrix);
-    	} else
+    	ObjectAR objAR = (showLoadingObj) ? loadingObjAR : activeObjAR;
+    	if (objAR != null) {
+    		//CustomLog.d(TAG, "updateObjectARPos - actualizando objeto AR POS...");
+    		objAR.updateMarkerPosition(modelViewMatrix);
+    	}
+    	else
     		CustomLog.d(TAG, "updateObjectARPos - no hay ningun objeto AR para actualizar POS");
+    }
+    
+    // Restaura la posicion, orientacion y field of view del objeto 3D activo
+    public void restoreObjectAROriginalStatus() {
+    	ObjectAR objAR = (showLoadingObj) ? loadingObjAR : activeObjAR;
+    	if (objAR != null) {
+    		objAR.restoreOriginalStatus();
+    	}    	
     }
     
     public MarkerDetector getMarkerDetector() {
@@ -155,7 +172,17 @@ public class MainController {
     	this.markerDetector = md;
     }
     
-    private void setupNewObjectAR(String qrValue) {    			
+    private void setupNewObjectAR(String qrValue) {  
+    	// quitamos el fragment del objeto AR anterior si es que lo habia
+    	if (activeObjAR != null) {
+    		MainApplication.getInstance().getMainActivity().removeFragment(activeObjAR.getFragment());
+    	}
+    	
+    	// mientras todo el procedimiento de descarga del modelo y parsing sucede de forma asincronia
+    	// tenemos que mostrar inmediatamente el objeto 3D loading
+    	showLoadingObj = true;
+    	((LoadModelFragment)loadingObjAR.getFragment()).showObject3D();
+    	
 		// creamos un objeto AR para este QR detectado
 		int id = createObjectAR(qrValue);
 		CustomLog.d(TAG, "setting up new object AR - QR value = " + qrValue);
@@ -173,8 +200,15 @@ public class MainController {
     }
     
     public void setObjectARObject3D(Object3D obj) {
-    	if (activeObjAR != null)
+    	// ocultamos el objeto loading para mostrar el nuevo objeto
+    	showLoadingObj = false;
+    	((LoadModelFragment)loadingObjAR.getFragment()).hideObject3d();
+    	
+    	if (activeObjAR != null) {
     		activeObjAR.setObject3D(obj);
+    		// agregamos el fragment solo cuando realmente se cargo el nuevo modelo 3D
+    		MainApplication.getInstance().getMainActivity().addFragment(activeObjAR.getFragment(), "object_ar_" + activeObjAR.getID(), true);    		
+    	}
     }
     
 	public boolean detectMarkers(Mat m) {
@@ -187,20 +221,25 @@ public class MainController {
 		for (Marker marker : detectedMarkers) {
 			ArrayList<String> qr_codes = marker.extractQRCode();
 			if (qr_codes.size() > 0) {
+				String qr_id = qr_codes.get(0);
+				MessageUtils.showToast(ToastType.SUCCESS, "FIUBAAR marker found - ID = " + qr_id);
 				// debemos verificar si no es que se hizo un scan del mismo QR que ya esta activo				
 				if (activeObjAR != null) {
 					String currentQR = activeObjAR.getQRCode();
-					if (currentQR.equals(qr_codes.get(0))) {
+					if (currentQR.equals(qr_id)) {
 						return false; // se trata del mismo QR que ya esta activo asi que no seguimos
 					}											
 				} 
 				
-				setupNewObjectAR(qr_codes.get(0));
+				setupNewObjectAR(qr_id);
 				// solo devolvemos true si se trata de un marker con un QR nuevo y en 
-				// ese caso Vuforia va a iniciar un nuevo trackersource
-				return true;				
+				// ese caso Vuforia va a iniciar un nuevo trackersource		
+				return true;
+				//TODO: determinar si seria logico desactivar la deteccion de manos y gestos
+				// en caso de que ya estuviera activada
 			}
 		}
+		MessageUtils.showToast(ToastType.WARNING, "FIUBAAR marker not found");
 		return false;
 	}
 }

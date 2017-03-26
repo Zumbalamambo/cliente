@@ -441,7 +441,7 @@ public class Marker extends MatOfPoint2f implements Comparable<Marker>{
 		ArrayList<String> results =  MarkerScanner.scan(imageWidth, imageHeight, MatUtils.matToBytes(mat));            
         for (final String s: results) {
         	CustomLog.d("Marker", "extractQRCode - QR found = " + s);
-        	MessageUtils.showToast(ToastType.INFO, "QR found = " + s);
+        	//MessageUtils.showToast(ToastType.INFO, "QR found = " + s);
         	
         }
         return results;

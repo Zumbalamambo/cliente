@@ -12,16 +12,16 @@ import org.json.JSONObject;
 import rajawali.Object3D;
 
 import android.os.AsyncTask;
+import android.util.Log;
 
 import com.fi.uba.ar.MainApplication;
 import com.fi.uba.ar.utils.Constants;
 import com.fi.uba.ar.utils.CustomLog;
 import com.fi.uba.ar.utils.FileUtils;
+import com.fi.uba.ar.utils.MessageUtils;
+import com.fi.uba.ar.utils.MessageUtils.ToastType;
 import com.loopj.android.http.JsonHttpResponseHandler;
 import com.loopj.android.http.RequestParams;
-
-//TODO: la implementacion de esta clase esta totalmente atada a lo que definamos de la APP server
-// hay que adaptar el codigo a la respuesta JSON que sea necesaria para obtener el modelo 3D.
 
 // TODO: https://bitbucket.org/fiubaar/fiubaar/issue/19/definir-formato-json-y-datos-que-va-a
 // hay que definir bien que nos va a responder el server y hacer un cliente acorde
@@ -29,13 +29,10 @@ import com.loopj.android.http.RequestParams;
 // y en la respuesta json tengamos el listado completo de los archivos que tiene dentro y que se
 // deben usar para cargar el modelo 3d completo
 
-//XXX: al momento estamos haciendo uso de un server Mock en python que siempre devuelve lo mismo para probar
-// lo que responde al momento es un string json con
-// { '3DModelFile' : 'nombre_archivo.obj' }
-
 //XXX: Esto probablemente se pueda implementar de mucho mejor manera usando reactive programming
 // usando RxJava y Retrofit, por ejemplo como se explica en
 // http://blog.danlew.net/2014/10/08/grokking-rxjava-part-4/
+// pero quedara como posibles mejoras a futuro
 
 
 public class Download3DModelAsyncTask extends AsyncTask<String, Void, Object3D> {
@@ -61,20 +58,24 @@ public class Download3DModelAsyncTask extends AsyncTask<String, Void, Object3D> 
 					model_file[0] = response.getString("3DModelFile");
 					 CustomLog.d(TAG, "3DModelFile = " + model_file[0]);
 				} catch (JSONException e) {
-					CustomLog.e(TAG, "An exception occurred while getting 3d model info from server");
-					CustomLog.e(TAG, e.getMessage());
-					e.printStackTrace();
+					CustomLog.e(TAG, "An exception occurred while getting 3D model info from server");
+					CustomLog.e(TAG, Log.getStackTraceString(e));
+					MessageUtils.showToast(ToastType.ERROR, "Error downloading 3D model from server");
 				}
 	        }
 	        
 	        @Override
 	        public void onFailure(int statusCode, Header[] headers, Throwable t, JSONObject response) {									
 				CustomLog.d(TAG, "Failed to download 3DModelFile = " + model_file[0] + " - Error: " + t.getMessage());
-				t.printStackTrace();
+				CustomLog.e(TAG, Log.getStackTraceString(t));
+				MessageUtils.showToast(ToastType.ERROR, "Failed to download 3D model from server");
 				//TODO: deberiamos de alguna forma notificar al usuario que fallo la descarga
 				// Quizas podemso usar los "toast" messages como los que usamos para mostrar el QR
 	        }
 	    });
+		
+		//XXX: estamos seguros que el GET siempre lo hace con el cliente sync?
+		// Si esto lo hace con el Async quizas no tenemos el model_file cuando llegamos aca
 		
 		// si pudimos obtener la respuesta del server y tenemos la informacion
 		// entonces descargamos el archivo zip del modelo 3D
@@ -97,14 +98,14 @@ public class Download3DModelAsyncTask extends AsyncTask<String, Void, Object3D> 
 				if (output_dir != null) {
 					// buscamos en el directorio descomprimido por algun archivo 
 					// con extension conocida y soportada de modelo 3D 
+					MessageUtils.showToast(ToastType.SUCCESS, "3D model downloaded successfully");
 					return loadFromDirectory(output_dir);					
 				}
 				//TODO: habria que manejar el caso en el que el zip no tiene dentro ningun archivo con extension
 				// conocida y soportada y no hay nada que cargar como modelo 3D
 				// Es como si fuera un archivo invalido..
 			} else {
-				//TODO: deberiamos de alguna forma notificar al usuario que fallo la descarga
-				// Quizas podemso usar los "toast" messages como los que usamos para mostrar el QR
+				MessageUtils.showToast(ToastType.ERROR, "Failed to download 3D model from server");
 			}
 		}
 		return null;
@@ -118,10 +119,13 @@ public class Download3DModelAsyncTask extends AsyncTask<String, Void, Object3D> 
 		
 		if (obj3d != null) {
 			CustomLog.d(TAG, "onPostExecute - recibimos obj3d y lo cargamos como el objeto AR activo en el controller");
+			//MessageUtils.showToast(ToastType.INFO, "3D model loaded and now setting to marker");
 			MainApplication.getInstance().getMainController().setObjectARObject3D(obj3d);
 		}	
 		else
 			// esto seria algun caso en el que hubo algun tipo de error
+			// no mostramos este mensaje como toast porque sino son muchas notificaciones juntas
+			//MessageUtils.showToast(ToastType.ERROR, "Failed to load 3D model from the downloaded file"); 
 			CustomLog.d(TAG, "onPostExecute - recibimos obj3d null"); 
     }
 	
@@ -139,6 +143,7 @@ public class Download3DModelAsyncTask extends AsyncTask<String, Void, Object3D> 
 			if (Constants.VALID_3D_FILE_EXTENSIONS.contains(ext.toUpperCase())) {
 				// Si es un tipo de model 3D valido, entonces lo cargamos
 				// Esto hace la carga y parseo y como estamos actualmente en un async task no frenamos el thread UI
+				MessageUtils.showToast(ToastType.INFO, "Loading 3D model from file...");
 				return MainApplication.getInstance().getMainController().objectARLoadObject3D(f);
 			}
 		}		

@@ -34,7 +34,7 @@ import com.qualcomm.vuforia.Vuforia.UpdateCallbackInterface;
 public class VuforiaSession implements UpdateCallbackInterface
 {
     
-    private static final String LOGTAG = "Vuforia_Sample_Applications";
+    private static final String LOGTAG = "VuforiaSession";
     
     // Reference to the current activity
     private Activity mActivity;

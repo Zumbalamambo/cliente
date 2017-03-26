@@ -39,10 +39,10 @@ public class MessageUtils {
 						t = Toasty.warning(activity, msg);
 						break;
 					case SUCCESS:
-						Toasty.success(activity, msg);
+						t = Toasty.success(activity, msg);
 						break;
 					case ERROR:
-						Toasty.error(activity, msg);
+						t = Toasty.error(activity, msg);
 						break;
 					case CUSTOM:
 						// TODO: que hacemos aca? tendriamos que recibir mas
@@ -52,10 +52,12 @@ public class MessageUtils {
 						break;
 					case NORMAL:
 					default:
-						Toasty.normal(activity, msg);
+						t = Toasty.normal(activity, msg);
 						break;
 				}
-				t.show();
+				
+				if (t != null)
+					t.show();
 			}
 		});
 

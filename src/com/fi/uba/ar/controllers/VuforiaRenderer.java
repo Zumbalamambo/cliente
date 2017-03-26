@@ -27,9 +27,9 @@ import android.os.Message;
 import android.util.Log;
 
 import com.fi.uba.ar.MainApplication;
+import com.fi.uba.ar.detectors.HandTrackingDetector;
+import com.fi.uba.ar.detectors.NativeHandTrackingDetector;
 import com.fi.uba.ar.services.FrameService;
-import com.fi.uba.ar.services.detectors.HandTrackingDetector;
-import com.fi.uba.ar.services.detectors.NativeHandTrackingDetector;
 import com.fi.uba.ar.utils.CustomLog;
 import com.fi.uba.ar.utils.MatUtils;
 import com.fi.uba.ar.views.HandDebugFragment;
@@ -242,14 +242,14 @@ public class VuforiaRenderer implements GLSurfaceView.Renderer {
 			// native implementation color sampling
 			NativeHandTrackingDetector.sampleHandColor(m);
 
-			// Java implementation color sampling
-			HandTrackingDetector htd = MainApplication.getInstance()
-					.getMainController().getHandTrackingDetector();
-			if (htd != null) {
-				htd.doColorSampling(m);
-			}
+			// Java implementation color sampling (DEPRECADO)			
+//			HandTrackingDetector htd = MainApplication.getInstance().getMainController().getHandTrackingDetector();
+//			if (htd != null) {
+//				htd.doColorSampling(m);
+//			}
 
 		} else if (((MainActivity) mActivity).mBoundFrameService) {
+			//DEPRECADO
 			// tenemos que hacer tracking de la mano tambien enviando el frame
 			// al servicio
 			// procesamos los frames de manera asincronica en un servicio con un
@@ -443,8 +443,7 @@ public class VuforiaRenderer implements GLSurfaceView.Renderer {
 
 				// XXX: esto toma un objeto AR y lo actualiza con la info de los
 				// trackers
-				MainApplication.getInstance().getMainController()
-						.updateObjectARPos(modelViewMatrix);
+				MainApplication.getInstance().getMainController().updateObjectARPos(modelViewMatrix);
 
 				// float[] modelViewProjection = new float[16];
 				// Matrix.translateM(modelViewMatrix, 0, 0.0f, 0.0f,

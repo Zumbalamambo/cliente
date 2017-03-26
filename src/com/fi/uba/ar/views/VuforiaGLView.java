@@ -23,7 +23,7 @@ import android.util.Log;
 // You can use your own OpenGL implementation.
 public class VuforiaGLView extends GLSurfaceView
 {
-    private static final String LOGTAG = "Vuforia_SampleGLView";
+    private static final String LOGTAG = "VuforiaGLView";
     
     
     // Constructor.

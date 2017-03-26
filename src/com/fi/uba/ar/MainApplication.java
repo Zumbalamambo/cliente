@@ -35,6 +35,12 @@ public class MainApplication extends Application {
 	
 	//XXX: tendriamos que tener referencias a los servicios aca para que 
 	// cualquiera pueda obtenerlos? habra problema de threading?
+	//XXX: finalmente no se esta haciendo uso de los servicios asi que el comentario anterior no aplica 
+	
+	// Flags globales
+	private boolean handDetectionEnabled = true; //TODO: implementar switch para activar/desactivar esto
+	private boolean gestureDetectionEnabled = false;
+	
 	
 	@Override
 	public void onCreate() {
@@ -91,6 +97,7 @@ public class MainApplication extends Application {
 		//XXX: sera esto una causa de memory leak si mantenemos la referencia al contexto?
 		this.appContext = activity.getApplicationContext(); 
 		this.configManager = new ConfigManager(this.appContext);
+		this.mainController.createLoadingObjectAR();
 	}
 	
 	public void unregisterMainActivity(MainActivity activity) {
@@ -114,5 +121,31 @@ public class MainApplication extends Application {
 	
 	public Instrumentation getInstrumentation() {
 		return this.instrumentation;
+	}
+	
+	//XXX: como que quizas tener esto aca es mucha vuelta innecesaria
+	public boolean isHandDetectionEnabled() {
+		return handDetectionEnabled;
+	}
+	
+	public void setHandDetectionEnabled(boolean value) {		
+		handDetectionEnabled = value;
+	}
+	
+	public void toggleHandDetectionEnabled(boolean value) {
+		handDetectionEnabled = !handDetectionEnabled;
+	}
+	
+	public boolean isGestureDetectionEnabled() {
+		return gestureDetectionEnabled;
+	}
+	
+	public void toggleGestureDetectionEnabled() {
+		gestureDetectionEnabled = !gestureDetectionEnabled;
+		com.fi.uba.ar.controllers.HandGestureController.getInstance().toggleGestureDetection();
+	}
+	
+	public void closeApplication() {
+		getMainActivity().finishAffinity();
 	}
 }

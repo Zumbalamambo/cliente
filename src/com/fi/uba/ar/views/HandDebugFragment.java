@@ -2,6 +2,7 @@ package com.fi.uba.ar.views;
 
 import java.util.List;
 
+import com.fi.uba.ar.MainApplication;
 import com.fi.uba.ar.R;
 
 import android.app.Fragment;
@@ -14,19 +15,42 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.RelativeLayout;
 
+//TODO: el uso del HandDebugFragment tendria que ser opcional... como algo de debug
+// Hay que agregar algo en la UI para poder elegir activar/desactivar
 public class HandDebugFragment extends Fragment {
 
 	private static final String TAG = "HandDebugFragment";
 
 	private static HandDebugFragment instance = null;
 	
+	private static boolean enabled = false;
+	
 	HandDebugView handDebugView;
 	
-	public static HandDebugFragment getInstance() {
-		return instance;
+	public static void enable() {
+		if (!enabled) {
+			enabled = true;
+			MainApplication.getInstance().getMainActivity().launchDebugFragment(null);
+		}
 	}
 	
-	public HandDebugFragment() {
+	public static void disable() {	
+		enabled = false;
+		if (instance != null)
+			MainApplication.getInstance().getMainActivity().removeFragment(instance);
+	}
+	
+	public static HandDebugFragment getInstance() {
+		if (enabled) {
+			if (instance == null)
+				instance = new HandDebugFragment();
+			return instance;
+		}
+		else 
+			return null;
+	}
+	
+	private HandDebugFragment() {
 		super();
 		instance = this;
 	}

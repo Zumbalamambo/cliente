@@ -13,11 +13,16 @@ import org.opencv.core.Mat;
 import org.opencv.highgui.Highgui;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.app.Dialog;
+import android.app.DialogFragment;
 import android.app.Fragment;
+import android.app.FragmentManager;
 import android.app.FragmentTransaction;
 import android.app.Notification;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.ActivityInfo;
@@ -35,31 +40,36 @@ import android.view.Surface;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.CompoundButton;
+import android.widget.CompoundButton.OnCheckedChangeListener;
+import android.widget.Switch;
 import android.widget.Toast;
 
 import com.fi.uba.ar.MainApplication;
 import com.fi.uba.ar.R;
 import com.fi.uba.ar.bus.events.DisplayImageDebugEvent;
-import com.fi.uba.ar.engine3d.LoadModelFragment;
+import com.fi.uba.ar.detectors.HandTrackingDetector;
+import com.fi.uba.ar.detectors.MarkerDetector;
+import com.fi.uba.ar.detectors.NativeHandTrackingDetector;
 import com.fi.uba.ar.services.FrameService;
 //import com.fi.uba.ar.services.FrameService.LocalBinder;
 import com.fi.uba.ar.services.FrameStreamingService;
 
-import com.fi.uba.ar.services.detectors.HandTrackingDetector;
-import com.fi.uba.ar.services.detectors.MarkerDetector;
-import com.fi.uba.ar.services.detectors.NativeHandTrackingDetector;
 import com.fi.uba.ar.utils.CustomLog;
 import com.fi.uba.ar.utils.FileUtils;
+import com.fi.uba.ar.utils.MessageUtils;
+import com.fi.uba.ar.utils.MessageUtils.ToastType;
 import com.fi.uba.ar.views.DebugFragment;
 import com.fi.uba.ar.views.HandDebugFragment;
 import com.fi.uba.ar.views.SettingsFragment;
 import com.fi.uba.ar.views.SimpleFileDialog;
 import com.fi.uba.ar.views.VuforiaFragment;
 import com.fi.uba.ar.views.VuforiaGLView;
+import com.fi.uba.ar.views.engine3d.LoadModelFragment;
 
 import de.greenrobot.event.EventBus;
 
-public class MainActivity extends Activity {
+public class MainActivity extends Activity implements OnCheckedChangeListener , FragmentManager.OnBackStackChangedListener {
 
 	private class OpenCVLoaderCallback extends BaseLoaderCallback {
 		// ver de manejar todos los casos por ejemplo que no tiene la version
@@ -90,8 +100,7 @@ public class MainActivity extends Activity {
 				((MainApplication) getApplication()).getMainController()
 						.setMarkerDetector(new MarkerDetector());
 
-				// recien cuando se haya cargado opencv podemos crear el
-				// detector
+				// recien cuando se haya cargado opencv podemos crear el detector
 				((MainApplication) getApplication()).getMainController()
 						.createHandTrackerDetector();
 
@@ -152,8 +161,32 @@ public class MainActivity extends Activity {
 
 	}
 
+	
+	private class CloseAppDialog extends DialogFragment {
+	    @Override
+	    public Dialog onCreateDialog(Bundle savedInstanceState) {
+	        // Use the Builder class for convenient dialog construction
+	        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+	        builder.setMessage("Esta seguro que quiere cerrar la aplicacion?")
+	               .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+	                   public void onClick(DialogInterface dialog, int id) {
+	                	   CustomLog.d("CloseAppDialog", "OK - Cerrando app...");
+	                       MainApplication.getInstance().closeApplication();
+	                   }
+	               })
+	               .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+	                   public void onClick(DialogInterface dialog, int id) {
+	                       CustomLog.d("CloseAppDialog", "Cancel");
+	                       dialog.cancel();
+	                   }
+	               });
+	        return builder.create();
+	    }
+	}
+	
+	
 	static enum Fragment_action {
-		ADD, REPLACE
+		ADD, REPLACE, HIDE
 	}
 
 	protected static final String TAG = "MainActivity";
@@ -169,20 +202,16 @@ public class MainActivity extends Activity {
 
 	private boolean calibrationRun = false;
 
-	// XXX: revisar... nos falta pasar esto aca? o lo dejamos como etsa ahora
-	// funcionando
+	// XXX: revisar... nos falta pasar esto aca? o lo dejamos como esta ahora funcionando
 	private boolean vuforiaStarted = false;
 
 	private VuforiaSession vuforiaAppSession;
 
-	// Our OpenGL view:
 	private VuforiaGLView mGlView;
 
-	// Our renderer:
 	private VuforiaRenderer mRenderer;
 
-	private OpenCVLoaderCallback mLoaderCallback = new OpenCVLoaderCallback(
-			this);
+	private OpenCVLoaderCallback mLoaderCallback = new OpenCVLoaderCallback(this);
 
 	private FrameServiceConnection mFrameServiceConnection = new FrameServiceConnection();
 
@@ -191,6 +220,8 @@ public class MainActivity extends Activity {
 	private boolean mIsDroidDevice;
 
 	private MainActivity sInstance;
+	
+	private Switch gestureSwitch;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -199,16 +230,12 @@ public class MainActivity extends Activity {
 		super.onCreate(savedInstanceState);
 		getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 		setContentView(R.layout.activity_main);
-
-		((MainApplication) getApplication()).registerMainActivity(this);
+		
 		//XXX: en el refactor por el momento  no necesitamos usar el bus
 		//EventBus.getDefault().register(this);
 		sInstance = this;
 
-		CustomLog.i(
-				TAG,
-				"openCV Manager loaded: "
-						+ this.mLoaderCallback.isOpenCVLoaded());
+		CustomLog.i(TAG, "openCV Manager loaded: " + this.mLoaderCallback.isOpenCVLoaded());
 		// cargamos librerias externas necesarias primero
 		loadExternalLibraries();
 		// vuforiaAppSession = new VuforiaSession(this);
@@ -221,9 +248,10 @@ public class MainActivity extends Activity {
 		// this.mainFragment = new NativeCameraFragment();
 		// setMainContainerContent(new NativeCameraFragment(),
 		// Fragment_action.REPLACE);
+		
 		this.mainFragment = new VuforiaFragment();
 		// setMainContainerContent(this.mainFragment, Fragment_action.ADD);
-		setMainContainerContent(this.mainFragment, Fragment_action.REPLACE);
+		setMainContainerContent(this.mainFragment, Fragment_action.REPLACE, "vuforia", false);
 
 		startServices();
 
@@ -239,6 +267,14 @@ public class MainActivity extends Activity {
 		// rompe todo!
 		
 		CustomLog.i(TAG, "onCreate - screen orientation = " + getScreenOrientation());
+		
+		gestureSwitch = (Switch) findViewById(R.id.gesture_switch_button); 
+		gestureSwitch.setChecked(false);
+		gestureSwitch.setOnCheckedChangeListener((OnCheckedChangeListener) this);
+		
+		//getFragmentManager().addOnBackStackChangedListener(this);
+		
+		((MainApplication) getApplication()).registerMainActivity(this);
 
 	}
 
@@ -317,8 +353,7 @@ public class MainActivity extends Activity {
 	public void onResume() {
 		// CustomLog.w(TAG, "onResume llamado!!!!!!!");
 		super.onResume();
-		OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_2_4_3, this,
-				mLoaderCallback);
+		OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_2_4_3, this, mLoaderCallback);
 		// launchMainFragment();
 		// if (!vuforiaStarted) {
 		// Intent intent = new Intent(this, UserDefinedTargets.class);
@@ -353,7 +388,7 @@ public class MainActivity extends Activity {
 				// de settings volver a mostrar el objeto 3D....
 				// El tema es donde lo hacemos??
 				final Fragment fragment = new SettingsFragment();
-				setMainContainerContent(fragment, Fragment_action.ADD);
+				setMainContainerContent(fragment, Fragment_action.ADD, "settings", true);
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -393,7 +428,7 @@ public class MainActivity extends Activity {
 			}
 			// por defecto creamos el fragment de la camara con puro OpenCV
 			// setMainContainerContent(new OpenCVCameraFragment(),
-			// Fragment_action.REPLACE);
+			// Fragment_action.REPLACE, "java_camera");
 
 			// Implementacion personalizada usando camara nativa y port
 			// modificado de
@@ -401,7 +436,7 @@ public class MainActivity extends Activity {
 			// FPS
 			if (this.mainFragment == null)
 				this.mainFragment = new NativeCameraFragment();
-			setMainContainerContent(this.mainFragment, Fragment_action.REPLACE);
+			setMainContainerContent(this.mainFragment, Fragment_action.REPLACE, "native_camera");
 		}
 
 		mApp.registerMainActivity(this);
@@ -414,24 +449,24 @@ public class MainActivity extends Activity {
 		//
 		// try {
 		// final Fragment fragment = new LoadModelFragment();
-		// setMainContainerContent(fragment, Fragment_action.ADD);
+		// setMainContainerContent(fragment, Fragment_action.ADD, null);
 		// } catch (Exception e) {
 		// e.printStackTrace();
 		// }
-		MainApplication.getInstance().getMainController()
-				.createObjectAR("TEST");
+		MainApplication.getInstance().getMainController().createObjectAR("TEST");
 	}
 
 	public void launchDebugFragment(View v) {
 
 		try {
 			if (debugFragment == null) {
-				setTitle("Debug View");
+				//setTitle("Debug View");
 				// debugFragment = new DebugFragment();
 				// debugFragment = new ImageFragment();
-				debugFragment = new HandDebugFragment();
-				setMainContainerContent(debugFragment, Fragment_action.ADD);
+				debugFragment = HandDebugFragment.getInstance();
+				
 			}
+			setMainContainerContent(debugFragment, Fragment_action.ADD, "hand_debug", true);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -443,7 +478,7 @@ public class MainActivity extends Activity {
 
 		try {
 			final Fragment fragment = new NativeCameraFragment();
-			setMainContainerContent(fragment, Fragment_action.REPLACE);
+			setMainContainerContent(fragment, Fragment_action.REPLACE, null, true);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -460,20 +495,16 @@ public class MainActivity extends Activity {
 		// proximo frame que se le pase al servicio
 		// mFrameService.setDoSampleHandColor();
 
-		// XXX: Esto es solo para testing
-		// siempre que hacemos el sampling nos aseguramos que el debug view este
-		// activo
-		launchDebugFragment(v); // TODO: hay que comentar o sacar esta linea
-								// para release
-
-		HandTrackingDetector htd = ((MainApplication) getApplication())
-				.getMainController().getHandTrackingDetector();
+		//TODO: a modo de prueba siempre habilitamos el debug fragment pero esto deberia ser opcional y configurable 
+		// desde algun lugar de la UI o menu de settings!
+		HandDebugFragment.enable();
+		
+		HandTrackingDetector htd = ((MainApplication) getApplication()).getMainController().getHandTrackingDetector();
 		if (htd != null) {
 			if (htd.isColorSamplingDone())
 				htd.nextState();
 			else
-				((VuforiaFragment) this.mainFragment)
-						.doColorSampling();
+				((VuforiaFragment) this.mainFragment).doColorSampling();
 		}
 	}
 
@@ -482,12 +513,10 @@ public class MainActivity extends Activity {
 	// XXX: para testear la deteccion de la mano con una imagen estatica
 	// y poder debuggear si lo necesitamos
 	public void testHandDetection(View v) {
-		// TODO: agregamos un dialogo para poder elegir un archivo de la tarjeta
-		// sd?
+		// TODO: agregamos un dialogo para poder elegir un archivo de la tarjeta sd?
 		// esta es otra alternativa simple
 		// http://www.scorchworks.com/Blog/simple-file-dialog-for-android-applications/
-		CustomLog.e("TestManos",
-				"Testing de deteccion de mano con imagen estatica");
+		CustomLog.e("TestManos", "Testing de deteccion de mano con imagen estatica");
 		SimpleFileDialog FileOpenDialog = new SimpleFileDialog(
 				MainActivity.this, "FileOpen",
 				new SimpleFileDialog.SimpleFileDialogListener() {
@@ -496,10 +525,7 @@ public class MainActivity extends Activity {
 						// The code in this function will be executed when the
 						// dialog OK button is pushed
 						m_chosen = chosenDir;
-						Toast.makeText(MainActivity.this,
-								"Chosen FileOpenDialog File: " + m_chosen,
-								Toast.LENGTH_LONG).show();
-
+						MessageUtils.showToast(ToastType.INFO, "Chosen FileOpenDialog File: " + m_chosen);						
 						// Si se eligio un archivo podemos hacer el pasaje de
 						// esa imagen a un objeto Mat
 						// y llamar al hand detector que querramos
@@ -508,15 +534,11 @@ public class MainActivity extends Activity {
 							HandTrackingDetector htd = ((MainApplication) getApplication())
 									.getMainController()
 									.getHandTrackingDetector();
-							// XXX: por algun motivo esto tarda muchiiiisimo
-							// tiempo
+							// XXX: por algun motivo esto tarda muchiiiisimo tiempo
 							m = htd.detect(m);
 							if (mBoundFrameStreamingService) {
-								mFrameStreamingService.enqueueFrame(m); // enviamos
-																		// al
-																		// streaming
-																		// para
-																		// verla
+								// enviamos al streaming para verla
+								mFrameStreamingService.enqueueFrame(m); 
 							}
 						} catch (Exception e) {
 							CustomLog.e("TestManos",
@@ -524,7 +546,6 @@ public class MainActivity extends Activity {
 											+ "archivo = " + m_chosen + "\n"
 											+ e.toString());
 						}
-
 					}
 				});
 
@@ -546,36 +567,51 @@ public class MainActivity extends Activity {
 				10); // duration
 	}
 
-	public void addFragment(Fragment f) {
-		setMainContainerContent(f, Fragment_action.ADD);
+	public void addFragment(Fragment f, String name, boolean addToStack) {
+		setMainContainerContent(f, Fragment_action.ADD, name, addToStack);
 	}
 
-	private void setMainContainerContent(Fragment f, Fragment_action type) {
-		final FragmentTransaction transaction = getFragmentManager()
-				.beginTransaction();
+	private void setMainContainerContent(Fragment f, Fragment_action type, String name, boolean addToStack) {
+		// si ya existe un fragmento con el mismo nombre no hacemos nada
+		if (name != null)
+			if (getFragmentManager().findFragmentByTag(name) != null)
+				return;
+		
+		final FragmentTransaction transaction = getFragmentManager().beginTransaction();
 		switch (type) {
-		case ADD: { // con esto el fragmento esta encima del anterior de forma
-					// superpuesta
-			transaction.add(R.id.main_container, f, TAG);
-		}
+			case ADD: { 
+				// con esto el fragmento esta encima del anterior de forma superpuesta
+				transaction.add(R.id.main_container, f, TAG);				
+			}
 			break;
-		case REPLACE: {
-			transaction.replace(R.id.main_container, f, TAG);
-		}
+			case REPLACE: {
+				transaction.replace(R.id.main_container, f, TAG);
+				// en el caso de replace no lo agregamos al stack asi queda fijo
+			}
 			break;
+			default: //nada
+				break;
 		}
-		// agrega el fragment al stack asi si el usuario navega hacia atras lo
-		// ve
-		transaction.addToBackStack(null);
+		
+		// agrega el fragment al stack asi si el usuario navega hacia atras lo ve
+		if (addToStack)
+			transaction.addToBackStack(name);
+		
 		transaction.commit();
 	}
 
 	public void removeFragment(Fragment f) {
-		final FragmentTransaction transaction = getFragmentManager()
-				.beginTransaction();
+		final FragmentTransaction transaction = getFragmentManager().beginTransaction();
 		transaction.remove(f);
 		transaction.commit();
 	}
+	
+	public void hideFragment(Fragment f) {
+		final FragmentTransaction transaction = getFragmentManager().beginTransaction();
+		transaction.hide(f);
+		transaction.commit();
+	}
+	
 
 	/*
 	 * Este metodo se encarga de cargar cualquier libreria externa que sea
@@ -585,14 +621,12 @@ public class MainActivity extends Activity {
 	private boolean loadExternalLibraries() {
 
 		// Si compilamos con stl shared library tenemos que cargar esa primero
-		// antes
-		// que todo el resto de nuestras libs
+		// antes que todo el resto de nuestras libs
 		// System.loadLibrary("gnustl_shared");
 
 		// XXX: se supone que no deberia ser necesario forzar a cargar OpenCV
 		// pero ha pasado que a veces se registraba el NativeCameraFragment
-		// cuando aun opencv
-		// no esta listo y da excepciones.
+		// cuando aun opencv no esta listo y da excepciones.
 		// El problema con esto es que a veces llamar este initAsync causa que
 		// se haga un load
 		// de opencv y no estoy seguro si eso puede causar memory leaks por
@@ -604,13 +638,10 @@ public class MainActivity extends Activity {
 		// y nuestra clase tambien lo llama en onResume todas las veces
 
 		if (!this.mLoaderCallback.isOpenCVLoaded()) {
-			CustomLog
-					.i(TAG,
-							"openCV Manager no fue cargado aun. Iniciando carga de OpenCV Async");
+			CustomLog.i(TAG, "openCV Manager no fue cargado aun. Iniciando carga de OpenCV Async");
 			// OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_2_4_8,
 			// getBaseContext(), this.mLoaderCallback);
-			OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_2_4_3, this,
-					this.mLoaderCallback);
+			OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_2_4_3, this, this.mLoaderCallback);
 		}
 
 		// si alguna lib necesita de opencv entonces NO podemos hacer load aca
@@ -630,10 +661,8 @@ public class MainActivity extends Activity {
 		try {
 			// XXX: copiamos el archivo con calibracion por defecto desde
 			// res/raw al cache
-			InputStream is = getResources().openRawResource(
-					R.raw.intrinsics_yml);
-			FileUtils.writeFileToCache("/fiubaar_intrinsics.yml",
-					IOUtils.toByteArray(is));
+			InputStream is = getResources().openRawResource(R.raw.intrinsics_yml);
+			FileUtils.writeFileToCache("/fiubaar_intrinsics.yml", IOUtils.toByteArray(is));
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -689,8 +718,7 @@ public class MainActivity extends Activity {
 				orientation = ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE;
 				break;
 			default:
-				Log.e(TAG, "Unknown screen orientation. Defaulting to "
-						+ "portrait.");
+				Log.e(TAG, "Unknown screen orientation. Defaulting to portrait.");
 				orientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT;
 				break;
 			}
@@ -712,8 +740,7 @@ public class MainActivity extends Activity {
 				orientation = ActivityInfo.SCREEN_ORIENTATION_REVERSE_PORTRAIT;
 				break;
 			default:
-				Log.e(TAG, "Unknown screen orientation. Defaulting to "
-						+ "landscape.");
+				Log.e(TAG, "Unknown screen orientation. Defaulting to landscape.");
 				orientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE;
 				break;
 			}
@@ -729,5 +756,48 @@ public class MainActivity extends Activity {
 			((ImageFragment) debugFragment).addImage(event.bitmap);
 	}
 	*/
+	
+	// Handler para switch de deteccion de gestos
+	@Override
+	public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) { 
+		MainApplication.getInstance().toggleGestureDetectionEnabled();
+	}
+	    
+	//XXX: esto no es un handler para el boton atras sino que se llama cada vez que 
+	// se agrega un fragment tambien!!!
+	@Override
+	public void onBackStackChanged() { }
+	
+	// Handler para manejar el boton "atras"
+	@Override
+	public void onBackPressed(){
+		int fcount = getFragmentManager().getBackStackEntryCount();
+//		CustomLog.d(TAG, "BOTON ATRAS FUE TOCADO - fcount = " + fcount);
+//		CustomLog.d(TAG, Log.getStackTraceString(new Exception()));		
+		MessageUtils.showToast(ToastType.INFO, "BOTON ATRAS TOCADO - fcount = " + fcount);
+		//XXX: el fcount queda en 1 aun cuando se dio atras y habia 2 fragmentos
+		// probablemente porque este handler se ejecuta despues de que ya se haya sacado el fragment del stack
+//		if (fcount == 1) {
+//			// solo queda 1 fragment y es el principal que es el de vuforia
+//			// aca tenemos que preguntar si esta seguro de que quiere cerrar la app
+//			new CloseAppDialog().show(getFragmentManager(), "close");
+//		}
+//		else
+			super.onBackPressed();
+    }
+	
+	public void toggleGestureSwitch() {
+		this.runOnUiThread(new Runnable() {
+			@Override
+			public void run() {
+				gestureSwitch.toggle();
+			}
+		});		
+	}
+	
+	// restaura el objeto AR tal como cuando recien cargo
+	public void resetObjectAR(View v) {
+		((MainApplication) getApplication()).getMainController().restoreObjectAROriginalStatus();		
+	}
 
 }
