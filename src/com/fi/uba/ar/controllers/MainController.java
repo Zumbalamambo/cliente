@@ -53,6 +53,7 @@ public class MainController {
 	private MarkerDetector markerDetector;
 	private ObjectAR activeObjAR;
 	private ObjectAR loadingObjAR;
+	private LoadModelFragment fragmentAR;
 	private boolean showLoadingObj = false;
 	private HandTrackingDetector htd;
 		
@@ -123,19 +124,21 @@ public class MainController {
 	public void createLoadingObjectAR() {
 		CustomLog.d(TAG, "createLoadingObjectAR");
 		ObjectAR obj_ar = new ObjectAR(0, "loading");
-    	Fragment fragment = new LoadModelFragment(true);
-    	obj_ar.setFragment(fragment); 
+//    	Fragment fragment = new LoadModelFragment(true);
+		fragmentAR = new LoadModelFragment(true);
+    	obj_ar.setFragment(fragmentAR); 
     	loadingObjAR = obj_ar;
     	// agregamos el fragment pero no en el stack asi el boton "atras" nunca lo saca
-    	MainApplication.getInstance().getMainActivity().addFragment(fragment, "loading", false);    	
+    	MainApplication.getInstance().getMainActivity().addFragment(fragmentAR, "fragmentAR", false);    	
 	}
 	
     public int createObjectAR(String qr) { 
     	int id = ar_objects.size() + 1;
     	CustomLog.d(TAG, "creando y agregando nuevo ObjectAR ID = " +  id);
     	ObjectAR obj_ar = new ObjectAR(id, qr);
-    	Fragment fragment = new LoadModelFragment(false);
-    	obj_ar.setFragment(fragment);    	
+    	//Fragment fragment = new LoadModelFragment(false);
+    	obj_ar.setFragment(fragmentAR);
+    	//CustomLog.d(TAG, "LoadModelFragment creado para ObjectAR ID = " +  id + " - fragment = " + fragment);
     	ar_objects.put(id, obj_ar);
     	activeObjAR = obj_ar;    	
     	return id;
@@ -174,14 +177,21 @@ public class MainController {
     
     private void setupNewObjectAR(String qrValue) {  
     	// quitamos el fragment del objeto AR anterior si es que lo habia
-    	if (activeObjAR != null) {
-    		MainApplication.getInstance().getMainActivity().removeFragment(activeObjAR.getFragment());
-    	}
+//    	if (activeObjAR != null) {
+//    		MainApplication.getInstance().getMainActivity().removeFragment(activeObjAR.getFragment());
+//    	}
+    	
+    	//XXX: Workaround para poder tocar flecha hacia atras y quitar los objetos
+    	// agregamos un fragment vacio para que exista en el stack pero que no haga nada
+    	// y sirva para handlear el boton atras donde simplemente se lo saque del stack
+    	// mientras los objetos 3D son ocultados
+    	MainApplication.getInstance().getMainActivity().addFragment(new Fragment(), "object_ar_" + qrValue, true);
     	
     	// mientras todo el procedimiento de descarga del modelo y parsing sucede de forma asincronia
     	// tenemos que mostrar inmediatamente el objeto 3D loading
     	showLoadingObj = true;
-    	((LoadModelFragment)loadingObjAR.getFragment()).showObject3D();
+    	fragmentAR.clearObject3D();
+    	fragmentAR.showObject3D();
     	
 		// creamos un objeto AR para este QR detectado
 		int id = createObjectAR(qrValue);
@@ -207,8 +217,12 @@ public class MainController {
     	if (activeObjAR != null) {
     		activeObjAR.setObject3D(obj);
     		// agregamos el fragment solo cuando realmente se cargo el nuevo modelo 3D
-    		MainApplication.getInstance().getMainActivity().addFragment(activeObjAR.getFragment(), "object_ar_" + activeObjAR.getID(), true);    		
+    		//MainApplication.getInstance().getMainActivity().addFragment(activeObjAR.getFragment(), "object_ar_" + activeObjAR.getID(), true);    		
     	}
+    }
+    
+    public void hideObjectsAR() {
+    	fragmentAR.hideObject3d();
     }
     
 	public boolean detectMarkers(Mat m) {

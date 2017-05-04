@@ -162,11 +162,10 @@ public class ObjectAR {
 		} catch (Exception e) {
 			CustomLog.e(TAG, "Error cargando objeto 3D desde archivo");
 			CustomLog.e(TAG, e.toString());
-			
 			e.printStackTrace();
 		}
 		
-		return null;		 
+		return null;
 	}
 	
 	public void load3DObjectDEBUG() {

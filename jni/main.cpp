@@ -75,6 +75,7 @@ void printText(Mat src, string text) {
 void doHandColorSample(Mat mat) {
 	LOGD("NativeHandTrackingDetector", "llamada a waitForPalmCover - arrancando...");
 	//dumpMatInfo(mat);
+	roi.clear(); //XXX: intentamos poder hacer sample mas de una vez
 	m.src = mat;
 	std::stringstream ss;
 	ss.str("");

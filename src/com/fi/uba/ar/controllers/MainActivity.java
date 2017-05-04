@@ -771,10 +771,16 @@ public class MainActivity extends Activity implements OnCheckedChangeListener , 
 	// Handler para manejar el boton "atras"
 	@Override
 	public void onBackPressed(){
-		int fcount = getFragmentManager().getBackStackEntryCount();
+		
+		// Como el LoadModelFragment no esta en el stack y no se puede quitar
+		// al hacer atras, si hay objetos 3D siendo mostrados, entonces los ocultamos
+		//XXX: esto puede ser que haga que la logica del boton atras falle... hay que probarlo!
+		MainApplication.getInstance().getMainController().hideObjectsAR();
+		
+//		int fcount = getFragmentManager().getBackStackEntryCount();
 //		CustomLog.d(TAG, "BOTON ATRAS FUE TOCADO - fcount = " + fcount);
 //		CustomLog.d(TAG, Log.getStackTraceString(new Exception()));		
-		MessageUtils.showToast(ToastType.INFO, "BOTON ATRAS TOCADO - fcount = " + fcount);
+//		MessageUtils.showToast(ToastType.INFO, "BOTON ATRAS TOCADO - fcount = " + fcount);
 		//XXX: el fcount queda en 1 aun cuando se dio atras y habia 2 fragmentos
 		// probablemente porque este handler se ejecuta despues de que ya se haya sacado el fragment del stack
 //		if (fcount == 1) {
@@ -783,7 +789,7 @@ public class MainActivity extends Activity implements OnCheckedChangeListener , 
 //			new CloseAppDialog().show(getFragmentManager(), "close");
 //		}
 //		else
-			super.onBackPressed();
+		super.onBackPressed();
     }
 	
 	public void toggleGestureSwitch() {

@@ -145,7 +145,7 @@ public class Download3DModelAsyncTask extends AsyncTask<String, Void, Object3D> 
 				// Esto hace la carga y parseo y como estamos actualmente en un async task no frenamos el thread UI
 				MessageUtils.showToast(ToastType.INFO, "Loading 3D model from file...");
 				return MainApplication.getInstance().getMainController().objectARLoadObject3D(f);
-			}
+			}			
 		}		
 		return null;
 	}

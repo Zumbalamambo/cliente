@@ -114,7 +114,7 @@ public class VuforiaFragment extends Fragment implements VuforiaSessionControl, 
         // This is needed for some Droid devices to force portrait
         if (mIsDroidDevice)
         {
-            getActivity().setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+            //getActivity().setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
             getActivity().setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         }
         

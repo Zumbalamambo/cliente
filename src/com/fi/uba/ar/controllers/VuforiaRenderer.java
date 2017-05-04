@@ -32,6 +32,8 @@ import com.fi.uba.ar.detectors.NativeHandTrackingDetector;
 import com.fi.uba.ar.services.FrameService;
 import com.fi.uba.ar.utils.CustomLog;
 import com.fi.uba.ar.utils.MatUtils;
+import com.fi.uba.ar.utils.MessageUtils.ToastType;
+import com.fi.uba.ar.utils.MessageUtils;
 import com.fi.uba.ar.views.HandDebugFragment;
 import com.fi.uba.ar.views.VuforiaFragment;
 import com.qualcomm.vuforia.Frame;
@@ -238,7 +240,7 @@ public class VuforiaRenderer implements GLSurfaceView.Renderer {
 			doColorSampling = false;
 
 			// TODO: elegir que implementacion usar!! nativa o java?!
-
+			MessageUtils.showToast(ToastType.INFO, "Hand color sampling...");
 			// native implementation color sampling
 			NativeHandTrackingDetector.sampleHandColor(m);
 

@@ -1,22 +1,13 @@
 package com.fi.uba.ar.views.engine3d;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.nio.FloatBuffer;
-
 import javax.microedition.khronos.opengles.GL10;
 
 import rajawali.Object3D;
-import rajawali.animation.Animation.RepeatMode;
 import rajawali.animation.Animation3D;
-import rajawali.animation.EllipticalOrbitAnimation3D;
-import rajawali.animation.EllipticalOrbitAnimation3D.OrbitDirection;
-import rajawali.animation.RotateOnAxisAnimation;
 import rajawali.lights.PointLight;
 import rajawali.math.Matrix4;
 import rajawali.math.Quaternion;
 import rajawali.math.vector.Vector3;
-import rajawali.math.vector.Vector3.Axis;
 import rajawali.parser.LoaderGCode;
 import rajawali.parser.LoaderOBJ;
 import rajawali.parser.ParsingException;
@@ -26,10 +17,6 @@ import rajawali.util.RajLog;
 import android.app.Activity;
 import android.content.Context;
 import android.content.pm.ActivityInfo;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.Color;
-import android.opengl.Matrix;
 import android.os.Bundle;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
@@ -46,16 +33,10 @@ import com.qualcomm.vuforia.Renderer;
 import com.qualcomm.vuforia.State;
 import com.qualcomm.vuforia.Tool;
 import com.qualcomm.vuforia.TrackableResult;
-import rajawali.materials.*;
-import rajawali.materials.methods.DiffuseMethod;
-import rajawali.materials.methods.SpecularMethod;
-import rajawali.materials.textures.ATexture;
-import rajawali.materials.textures.Texture;
-import rajawali.materials.textures.ATexture.TextureException;
-import rajawali.materials.textures.ATexture.TextureType;
-import rajawali.materials.textures.NormalMapTexture;
 
 public class LoadModelFragment extends Base3DFragment  implements OnTouchListener {
+	private static final String TAG = "LoadModelFragment";
+	
 	private ScaleGestureDetector mScaleDetector;
 	private RotateGestureDetector mRotateDetector;
 	
@@ -80,13 +61,19 @@ public class LoadModelFragment extends Base3DFragment  implements OnTouchListene
 	
 	@Override
 	protected Base3DRenderer createRenderer() {
-		return new LoadModelRenderer(getActivity(), loadingObject3D);		
+		Base3DRenderer renderer = new LoadModelRenderer(getActivity(), loadingObject3D);
+		CustomLog.d(TAG, "createRender called. Returning = " +  renderer);
+		return renderer;		
 	}
 	
 	public void setObject3D(Object3D obj) {
 		((LoadModelRenderer)getRenderer()).setObject3D(obj);		
 	}
 	
+	public void clearObject3D() {
+		((LoadModelRenderer)getRenderer()).clearObject3D();		
+	}
+		
 	public void hideObject3d() {
 		((LoadModelRenderer)getRenderer()).hideObject3D();
 	}
@@ -482,41 +469,67 @@ public class LoadModelFragment extends Base3DFragment  implements OnTouchListene
 		
 		protected void setObject3DPositionAndOrientation(Vector3 position, Quaternion orientation) {			
 //			CustomLog.d("LoadModelRenderer", "setObject3DPositionAndOrientation - position = " + position + " - orientation = " + orientation);
+			//XXX: comentamos las llamadas a setVisible
+			// esto fuerza a que sea visible cuando quizas los objetos fueron ocultados a proposito
 			if (mObject3D != null) {
-				mObject3D.setPosition(position);
-				mObject3D.setOrientation(orientation);
-				mObject3D.setVisible(true);
-			} else if (loadingObject3D != null) {				
-				loadingObject3D.setPosition(position);
-				loadingObject3D.setOrientation(orientation);
-				loadingObject3D.setVisible(true);
-			}
-			
+				if (mObject3D.isVisible()) {
+					mObject3D.setPosition(position);
+					mObject3D.setOrientation(orientation);
+				}
+				//mObject3D.setVisible(true); 
+			} else if (loadingObject3D != null) {
+				if (loadingObject3D.isVisible()) {
+					loadingObject3D.setPosition(position);
+					loadingObject3D.setOrientation(orientation);
+				}
+				//loadingObject3D.setVisible(true);
+			}			
 		}
 		
 		public Object3D getObject3D() {
 			return this.mObject3D;
 		}
 		
+		public void clearObject3D() {
+			// si existe algun otro objeto anterior lo tenemos que eliminar de la escena
+			if (this.mObject3D != null) {
+				this.mObject3D.setVisible(false);
+				getCurrentScene().removeChild(mObject3D);
+				//XXX: sera que hay leak de memoria por no borrar el objeto 
+				// de alguna mejor manera?
+				this.mObject3D = null; 
+			}
+		}
+		
+		public void clearLoadingObject() {
+			if (loadingObject3D != null) {
+				// como ya tenemos el objeto real a mostrar, tenemos que quitar el objeto de loading
+				restoreObject3DOriginalStatus();
+				loadingObject3D.setVisible(false);				
+				//XXX: evitamos borrar el loading de la escena para poder seguir mostrandolo
+				//getCurrentScene().removeChild(loadingObject3D);
+			}
+		}
+		
 		public void setObject3D(Object3D obj) {
+			clearObject3D();
+			clearLoadingObject();			
+			
 			this.mObject3D = obj;
+			this.mObject3D.setVisible(true); //XXX: es necesario?
 			
 			//XXX: en la implementacion de aruco android hacen un scale del object de acuerdo al
 			// tamanio del marker de la siguiente manera
 //			mObjectGroup.initialScale(mMarkerSize/2);
 //			mObjectGroup.getScale().x = mObjectGroup.getScale().y = mObjectGroup.getScale().z = mMarkerSize/2;				
 //			getCurrentScene().addChild(mObject3D);
+			
 			//XXX: el problema aca es que desde aca no estoy seguro si podemos obtener el tamanio del marker desde el tracker de vuforia
 			
 			//TODO: corregir el factor de escala probablemente verificando primero el tamanio real del objeto
-			mObject3D.setScale(3); // XXX: agregado a modo de testing para asegurarnos del que el objeto se carga bien sobre el marker y se ve
+			mObject3D.setScale(20); // XXX: agregado a modo de testing para asegurarnos del que el objeto se carga bien sobre el marker y se ve
 			getCurrentScene().addChild(mObject3D);
-			if (loadingObject3D != null) {
-				// como ya tenemos el objeto real a mostrar, tenemos que quitar el objeto de loading
-				loadingObject3D.setVisible(false);
-				getCurrentScene().removeChild(loadingObject3D);
-			}
-			
+						
 			// Cuando cargamos un nuevo objeto 3D que no es el "loading"
 			// guardamos los valores originales para poder restaurar luego
 			originalPosition = mObject3D.getPosition();
@@ -576,7 +589,7 @@ public class LoadModelFragment extends Base3DFragment  implements OnTouchListene
 		
 		public void rotateObjectDegreesTEST(float degrees) {
 			if (degrees != 0f) {
-				RajLog.i("rotateObjectDegreesTEST - degrees = " + degrees);
+				//RajLog.i("rotateObjectDegreesTEST - degrees = " + degrees);
 	//			// -- get vertex buffer
 	//			FloatBuffer vertBuffer = mObject3D.getGeometry().getVertices();
 	//			// -- get the normal buffer
@@ -702,14 +715,12 @@ public class LoadModelFragment extends Base3DFragment  implements OnTouchListene
 		public void showObject3D() {
 			setObject3DVisibility(true);
 		}
-		
-		
+
 		public void setObject3DVisibility(boolean val) {
 			if (loadingObject3D != null)
 				loadingObject3D.setVisible(val);
 			if (mObject3D != null)
 				mObject3D.setVisible(val);
-			
 		}
 		
 		//XXX: solo para debug, nos permite dumpear al log los valores actuales de position y orientation

@@ -130,4 +130,8 @@ public class NativeHandTrackingDetector {
 	}
 
 	public native static void sampleHandColor(long matAddr);
+	
+	public void resetSampleHandColor() {
+		handColorSampled = false;
+	}
 }

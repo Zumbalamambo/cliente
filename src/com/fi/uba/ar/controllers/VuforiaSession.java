@@ -17,6 +17,7 @@ import android.util.Log;
 import android.view.WindowManager;
 
 import com.fi.uba.ar.exceptions.VuforiaException;
+import com.fi.uba.ar.utils.CustomLog;
 import com.qualcomm.vuforia.CameraCalibration;
 import com.qualcomm.vuforia.CameraDevice;
 import com.qualcomm.vuforia.Matrix44F;
@@ -530,8 +531,7 @@ public class VuforiaSession implements UpdateCallbackInterface
                 break;
         }
         
-        Log.i(LOGTAG, "Activity is in "
-            + (mIsPortrait ? "PORTRAIT" : "LANDSCAPE"));
+        CustomLog.d(LOGTAG, "Activity orientation is " + (mIsPortrait ? "PORTRAIT" : "LANDSCAPE"));
     }
     
     
@@ -608,7 +608,7 @@ public class VuforiaSession implements UpdateCallbackInterface
         
         config.setSize(new Vec2I(xSize, ySize));
         
-        Log.i(LOGTAG, "Configure Video Background : Video (" + vm.getWidth()
+        CustomLog.d(LOGTAG, "Configure Video Background : Video (" + vm.getWidth()
             + " , " + vm.getHeight() + "), Screen (" + mScreenWidth + " , "
             + mScreenHeight + "), mSize (" + xSize + " , " + ySize + ")");
         

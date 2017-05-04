@@ -62,7 +62,7 @@ LOCAL_C_INCLUDES += coffeecatch/
 
 # FiubaAR
 LOCAL_SRC_FILES  += fiubaar_globals.cpp
-LOCAL_SRC_FILES  += com_fi_uba_ar_services_detectors_NativeHandTrackingDetector.cpp
+LOCAL_SRC_FILES  += com_fi_uba_ar_detectors_NativeHandTrackingDetector.cpp
 LOCAL_SRC_FILES  += handGesture.cpp
 LOCAL_SRC_FILES  += myImage.cpp
 LOCAL_SRC_FILES  += main.cpp
@@ -70,7 +70,7 @@ LOCAL_SRC_FILES  += roi.cpp
 LOCAL_SRC_FILES  += jni_process.cpp
 
 LOCAL_SRC_FILES  += onload.cpp
-LOCAL_SRC_FILES  += com_fi_uba_ar_services_detectors_HandTrackingDetector.cpp
+LOCAL_SRC_FILES  += com_fi_uba_ar_detectors_HandTrackingDetector.cpp
 LOCAL_SRC_FILES  += train.cpp
 LOCAL_SRC_FILES  += predict.cpp
 LOCAL_SRC_FILES  += svm/svm-train.cpp
